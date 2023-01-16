@@ -1,0 +1,759 @@
+/**************第2章 线性表**************/
+
+线性表的基本操作：
+InitList(&L)            //初始化表
+DestroyList(&L)         //销毁链表
+ListInsert(&L, i, e)    //插入操作
+ListDelete(&L, i, &e)   //删除操作
+LocateElem(L, e)        //按值查找操作
+GetElem(L, i)           //按位查找操作
+length(L)               //求表长
+PrintList(L)            //输出操作
+Empty(L)                //判空操作
+
+线性表的顺序表示：
+静态分配
+#define MaxSize 50
+typedef struct {
+    int data[MaxSize];
+    int length;
+} SqList;
+void InitList(SqList &L) {
+    for(int i = 0; i < MaxSize; i++)
+        L.data[i] = 0;
+    L.length = 0;
+}
+
+动态分配
+#define InitSize 50
+typedef struct {
+    int * data;
+    int MaxSize, length;
+} SeqList;
+void initList(SeqList &L) {
+    L.data = (int *)malloc(sizeof(int) * InitSize);
+    L.length = 0;
+    L.MaxSize = InitSize;
+}
+void IncreaseSize(SeqList &L, int len) {
+    int * p = L.data;
+    L.data = (int *)malloc(sizeof(int) * (L.MaxSize + len));
+    for(int i = 0; i < L.length; i++) {
+        L.data[i] = p[i];
+    }
+    L.MaxSize = L.MaxSize + len;
+    free(p);
+}
+
+单链表：
+typedef struct LNode{
+    ElemType data;
+    struct LNode * next;
+} LNode, * LinkList;
+bool InitList(LinkList &L) {
+    L = (LinkList)malloc(sizeof(LNode));
+    if(L == NULL)
+        return false;
+    L->next = NULL;
+    return true;
+}
+int Length(LinkList L) {
+    LNode * p = L;
+    int len = 0;
+    while(p->next != NULL) {
+        p = p->next;
+        len++;
+    }
+    return len;
+}
+LNode * GetElem(LinkList L, int i) {
+    if(i < 0)
+        return NULL;
+    LNode * p = L;
+    int j = 0;
+    while(p != NULL && j < i) {
+        p = p->next;
+        j++;
+    }
+    return p;
+}
+LNode * LocateElem(LinkList L, ElemType e) {
+    LNode * p = L->next;
+    while(p != NULL && p->data != e)
+        p = p->next;
+    return p;
+}
+bool InsertNextNode(LNode * p, ElemType e) {
+    if(p == NULL)
+        return false;
+    LNode * s = (LNode *)malloc(sizeof(LNode));
+    s->data = e;
+    s->next = p->next;
+    p->next = s;
+    return true;
+}
+bool ListInsert(LinkList &L, int i, ElemType e) {
+    return InsertNextNode(GetElem(L, i - 1), e);    //找到第 i - 1 个位置，在其后插入元素
+}
+bool InsertNode(LNode * p, ElemType e) {
+    if(p == NULL)
+        return false;
+    LNode * s = (LNode *)malloc(sizeof(LNode));
+    if(s == NULL)
+        return false;
+    s->data = p->data;
+    s->next = p->next;
+    p->next = s;
+    p->data = e;
+    return true;
+}
+bool DeleteNextNode(LNode * p, ElemType &e) {
+    if(p == NULL || p->next == NULL)
+        return false;
+    LNode * q = p->next;
+    p->next = q->next;
+    e = q->data;
+    free(q);
+    return true;
+}
+bool DeleteNode(LNode * p, ElemType &e) {
+    if(p == NULL)       //如果 p 恰好是最后一个结点，则不能使用该方法
+        return false;
+    LNode * q = p->next;
+    e = p->data;
+    p->data = q->data;
+    p->next = q->next;
+    free(q);
+    return true;
+}
+LinkList List_TailInsert(LinkList &L) {
+    L = (LinkList)malloc(sizeof(LNode));
+    ElemType x;
+    LNode * s, * r = L;
+    cin >> x;
+    while(x != 9999) {
+        s = (LNode *)malloc(sizeof(LNode));
+        s->data = x;
+        r->next = s;
+        r = s;
+        cin >> x;
+    }
+    r->next = NULL;
+    return L;
+}
+LinkList List_HeadInsert(LinkList &L) {
+    L = (LinkList)malloc(sizeof(LNode));
+    L->next = NULL;
+    LNode * s;
+    ElemType x;
+    cin >> x;
+    while(x != 9999) {
+        s = (LNode *)malloc(sizeof(LNode));
+        s->data = x;
+        s->next = L->next;
+        L->next = s;
+        cin >> x;
+    }
+    return L;
+}
+
+双链表：
+typedef struct DNode {
+    ElemType data;
+    DNode * prior;
+    DNode * next;
+} DNode, * DLinkList;
+
+bool InitDLinkList(DLinkList &L) {
+    L = (DLinkList)malloc(sizeof(DNode));
+    if(L == NULL)
+        return false;
+    L->prior = L;
+    L->next = L;
+    return true;
+}
+
+bool InsertNextDNode(DNode * p, DNode * s) {
+    if(p == NULL || s == NULL)
+        return false;
+    s->next = p->next;
+    if(p->next != NULL)
+        p->next->prior = s;
+    s->prior = p;
+    p->next = s;
+    return true;
+}
+
+bool DeleteNextDNode(DNode * p) {
+    if(p == NULL || p->next == NULL)
+        return false;
+    DNode * q = p->next;
+    p->next = q->next;
+    if(q->next != NULL)
+        q->next->prior = p;
+    free(q);
+    return true;
+}
+
+循环链表：
+
+循环单链表：
+typedef struct LNode {
+    ElemType data;
+    LNode * next;
+} LNode, * LinkList;
+
+bool InitList(LinkList &L) {
+    L = (LinkList)malloc(sizeof(LNode));
+    if(L == NULL)
+        return false;
+    L->next = L;
+    return true;
+}
+
+bool Empty(LinkList L) {
+    if(L->next == L)
+        return true;
+    else
+        return false;
+}
+
+bool isTail(LinkList L, LNode * p) {
+    if(p->next == L)
+        return true;
+    else
+        return false;
+}
+
+循环双链表
+typedef struct DNode {
+    ElemType data;
+    DNode * prior;
+    DNode * next;
+} DNode, * DLinkList;
+
+bool InitDLinkList(DLinkList &L) {
+    L = (DLinkList)malloc(sizeof(DNode));
+    if(L != NULL)
+        return false;
+    L->prior = L;
+    L->next = L;
+    return true;
+}
+
+bool Empty(DLinkList L) {
+    if(L->next == L)
+        return true;
+    else
+        return false;
+}
+
+bool isTail(DNode * p) {
+    if(p->next == L)
+        return true;
+    else
+        return false;
+}
+
+bool InsertNextDNode(DNode * p, DNode * s) {
+    if(p == NULL || s == NULL)
+        return false;
+    s->next = p->next;
+    p->next->prior = s;
+    s->prior = p;
+    p->next = s;
+    return true;
+}
+
+bool DeleteNextDNode(DNode * p) {
+    if(p == NULL || p->next == NULL)
+        return false;
+    DNode * q = p->next;
+    p->next = q->next;
+    q->next->prior = p;
+    free(q);
+    return true;
+}
+
+静态链表：
+#define MaxSize 50
+struct Node {
+    ElemType data;
+    int next;
+};
+typedef struct{
+    ElemType data;
+    int next;
+} SLinkList[MaxSize];
+
+
+/**************第3章 栈和队列**************/
+
+栈的基本操作：
+InitStack(&S)       //初始化一个空栈
+StackEmpty(S)       //判断一个栈是否为空，若为空返回true，否则返回false
+Push(&S, x)         //进栈，若栈S未满，则将x加入使之成为新的栈顶
+Pop(&s, &x)         //出栈，若栈S非空，则弹出栈顶元素，并用x返回
+GetTop(S, &x)       //读栈顶元素，若栈S非空，则用x返回栈顶元素
+DestroyStack(&s)    //销毁栈，并释放栈S占用的存储空间
+
+栈的顺序存储结构
+#define MaxSize 50
+typedef struct {
+    ElemType data[MaxSize];
+    int top;
+} SqStack;
+
+void InitStack(SqStack &S) {
+    S.top = -1;
+}
+
+bool StackEmpty(SqStack &S) {
+    if(S.top == -1)
+        return true;
+    else
+        return false;
+}
+
+bool Push(SqStack &S, ElemType x) {
+    if(S.top == MaxSize - 1)
+        return false;
+    else
+        S.data[++S.top] = x;
+    return true;
+}
+
+bool Pop(SqStack &S, ElemType &x) {
+    if(S.top == -1)
+        return false;
+    else
+        x = S.data[S.top--];
+    return true;
+}
+
+bool GetTop(SqStack S, ElemType &x) {
+    if(S.top == -1)
+        return false;
+    else
+        x = S.data[S.top];
+    return true;
+}
+
+bool StackEmpty(SqStack S) {
+    if(S.top == -1)
+        return true;
+    else
+        return false;
+}
+
+共享栈：
+#define MaxSize 50
+typedef struct {
+    ElemType data[MaxSize];
+    int top[2];
+} ShStack;
+
+void InitShStack(ShStack &S) {
+    S.top[0] = -1;
+    S.top[1] = MaxSize;
+}
+
+bool ShStackFull(ShStack &S) {
+    if(S.top[0] = S.top[1] - 1)
+        return true;
+    else
+        return false;
+}
+
+bool Push(ShStack &S, int i, ElemType x) {
+    if(i < 0 || i > 1)
+        return false;
+    if(S.top[0] == S.top[1] - 1)
+        return false;
+    switch(i) {
+        case 0 :
+            S.data[++S.top[0]] = x;
+            break;
+        case 1 :
+            S.data[--S.top[1]] = x;
+    }
+    return true;
+}
+
+bool Pop(ShStack &S, int i, ElemType &x) {
+    if(i < 0 || i > 1)
+        return false;
+    switch(i) {
+        case 0 :
+            if(S.top[0] == -1)
+                return false;
+            x = S.data[S.top[0]--];
+            break;
+        case 1 :
+            if(S.top[1] == MaxSize)
+                return false;
+            x = S.data[S.top[1]++];
+    }
+    return true;
+}
+
+栈的链式存储结构
+入栈和出栈操作都是在表头进行的
+typedef struct LinkNode {
+    ElemType data;      //数据域
+    LinkNode * next;    //指针域
+} * LiStack;            //栈类型定义
+
+
+队列的基本操作：
+InitQueue(&Q)：初始化队列，构造一个空队列Q
+DestroyQueue(&Q)：销毁队列。销毁并释放队列Q所占用的内存空间
+EnQueue(&Q)：入队，若队列Q未满，将x加入，使之成为新的队尾
+DeQueue(&Q, &x)：出队，若队列Q非空，删除队头元素，并用x返回
+GetHead(Q, &x)：读队头元素，若队列非空，则将队头元素赋值给x
+队列元素个数：(rear - front + MaxSize) % MaxSize
+
+顺序队：
+浪费一个空间以区别队空和队满
+typedef struct {
+    ElemType data[MaxSize];
+    int front, rear;
+} SqQueue;
+
+void InitQueue(SqQueue &Q) {
+    Q.rear = Q.front = 0;
+}
+
+bool QueueEmpty(SqQueue Q) {
+    if(Q.front == Q.rear)
+    // if(Q.front == (Q.rear + 1) % MaxSize)   // rear 指向队尾元素
+        return true;
+    else
+        return false;
+}
+
+bool EnQueue(SqQueue &Q, ElemType x) {
+    if(Q.front == (Q.rear + 1) % MaxSize)
+    // if(Q.front == (Q.rear + 2) % MaxSize)   // rear 指向队尾元素，判满
+        return false;
+    Q.data[Q.rear] = x;
+    Q.rear = (Q.rear + 1) % MaxSize;
+    // rear 指向队尾元素时
+    // Q.rear = (Q.rear + 1) % MaxSize;
+    // Q.data[Q.rear] = x;
+    return true;
+}
+
+bool DeQueue(SqQueue &Q, ElemType &x) {
+    if(QueueEmpty)
+        return false;
+    x = Q.data[Q.front];
+    Q.front = (Q.front + 1) % MaxSize;
+    // rear 指向队尾元素时
+    x = Q.data[Q.front];
+    Q.front = (Q.front + 1) % MaxSize;
+    return true;
+}
+
+不浪费空间的解决方式一：
+typedef struct {
+    ElemType data[MaxSize];
+    int front, rear, size;
+} SqQueue;
+
+void InitQueue(SqQueue &Q) {
+    Q.rear = Q.front = 0;
+    Q.size = 0;
+}
+
+bool QueueEmpty(SqQueue Q) {
+    if(Q.size == 0)
+        return true;
+    else
+        return false;
+}
+
+bool EnQueue(SqQueue &Q, ElemType x) {
+    if(Q.size == MaxSize)
+        return false;
+    Q.data[Q.rear] = x;
+    Q.rear = (Q.rear + 1) % MaxSize;
+    Q.size++;
+    return true;
+}
+
+bool DeQueue(SqQueue &Q, ElemType &x) {
+    if(QueueEmpty)
+        return false;
+    x = Q.data[Q.front];
+    Q.front = (Q.front + 1) % MaxSize;
+    Q.size--;
+    return true;
+}
+
+不浪费空间的解决方式二：
+typedef struct {
+    ElemType data[MaxSize];
+    int front, rear, tag;   // tag 为 0 代表删除一个元素，为 1 代表加入一个元素
+} SqQueue;
+
+void InitQueue(SqQueue &Q) {
+    Q.rear = Q.front = tag = 0;
+}
+
+bool QueueEmpty(SqQueue Q) {
+    if(Q.rear == Q.front && Q.tag == 0) //队空只能在删除一个元素之后
+        return true;
+    else
+        return false;
+}
+
+bool EnQueue(SqQueue &Q, ElemType x) {
+    if(Q.rear == Q.front && Q.tag == 1)
+        return false;
+    Q.data[Q.rear] = x;
+    Q.rear = (Q.rear + 1) % MaxSize;
+    Q.tag = 1;
+    return true;
+}
+
+bool DeQueue(SqQueue &Q, ElemType &x) {
+    if(QueueEmpty)
+        return false;
+    x = Q.data[Q.front];
+    Q.front = (Q.front + 1) % MaxSize;
+    Q.tag = 0;
+    return true;
+}
+
+链队：
+//带头结点
+struct LinkNode {
+    ElemType data;
+    LinkNode * next;
+};
+
+struct LinkQueue {
+    LinkNode * front, * rear;
+};
+
+void InitQueue(LinkQueue &Q) {
+    Q.front = Q.rear = (LinkNode *)malloc(sizeof(LinkNode));
+    Q.front->next = NULL;
+}
+
+bool isEmpty(LinkQueue Q) {
+    if(Q.rear == Q.front)
+        return true;
+    else
+        return false;
+}
+
+void EnQueue(LinkQueue &Q, ElemType x) {
+    LinkNode * s = (LinkNode *)malloc(sizeof(LinkNode));
+    s->data = x;
+    s->next = NULL;
+    Q.rear->next = s;
+    Q.rear = s;
+}
+
+bool DeQueue(LinkQueue &Q, ElemType &x) {
+    if(Q.rear == Q.front)
+        return false;
+    LinkNode * p = Q.front->next;
+    x = p->data;
+    Q.front->next = p->next;
+    if(p == Q.rear)
+        Q.rear = Q.front;
+    free(p);
+    return true;
+}
+
+//不带头结点
+struct LinkNode {
+    ElemType data;
+    LinkNode * next;
+};
+
+struct LinkQueue {
+    LinkNode * front, * rear;
+};
+
+void InitQueue(LinkQueue &Q) {
+    Q.front = Q.rear = NULL;
+}
+
+bool isEmpty(LinkQueue Q) {
+    if(Q.front == NULL)
+        return true;
+    else
+        return false;
+}
+
+void EnQueue(LinkQueue &Q, ElemType x) {
+    LinkNode * s = (LinkNode *)malloc(sizeof(LinkNode));
+    s->data = x;
+    s->next = NULL;
+    if(Q.front == NULL) {
+        Q.front = s;
+        Q.rear = s;
+    }
+    else {
+        Q.rear->next = s;
+        Q.rear = s;
+    }
+}
+
+bool DeQueue(LinkQueue &Q, ElemType &x) {
+    if(Q.front == NULL)
+        return false;
+    LinkNode * p = Q.front;
+    x = p->data;
+    Q.front = p->next;
+    if(Q.rear == p)
+        Q.rear = NULL;
+    free(p);
+    return true;
+}
+
+/**************第4章 串**************/
+
+串的基本操作：
+StrAssign(&T, chars)：赋值操作。把串 T 赋值为 chars
+StrCopy(&T, S)：复制操作。由串 S 复制得到串 T
+StrEmpty(S)：判空操作。若 S 为空串，则返回 TRUE，否则返回 FALSE
+StrCompare(S, T)：比较操作。若 S > T，则返回值 > 0；若 S = T，则返回值 = 0；若 S < T，则返回值 < 0
+StrLength(S)：求串长。返回串 S 的元素个数
+SubString(&Sub, S, pos, len)：求子串。用 Sub 返回串 S 的第 pos 个字符起长度为 len 的字串
+Concat(&T, S1, S2)：串连接。用 T 返回由 S1 和 S2 连接而成的新串
+Index(S, T)：定位操作。若主串 S 中存在与串 T 值相同的子串，则返回它在主串 S 中第一次出现的位置；否则函数值为 0
+ClearString(&S)：清空操作。将 S 清为空串
+DestroyString(&S)：销毁串。将串 S 销毁
+
+//定长顺序存储
+#define MAXLEN 255
+struct SString {
+    char ch[MAXLEN];
+    int length;
+};
+
+//堆分配存储
+struct HString {
+    char * ch;
+    int length;
+};
+
+//串的链式储存
+typedef struct StringNode {
+    char ch;    //每个结点存 1 个字符
+    // char ch[4]; //每个结点存多个字符
+    StringNode * next;
+} StringNode, * String;
+
+bool SubString (SString &Sub, SString S, int pos, int len) {
+    if(pos + len - 1 > S.length)
+        return false;
+    for(int i = pos; i < pos + len; i++)
+        Sub.ch[i - pos + 1] = S.ch[i];  // ch[0] 废弃不用
+    Sub.length = len;
+    return true;
+}
+
+int StrCompare(SString S, SString T) {
+    for(int i = 1; i <= S.length && i <= T.length; i++)
+        if(S.ch[i] != T.ch[i])
+            return S.ch[i] - T.ch[i];
+    return S.length - T.length;
+}
+
+int StrLength(SString S) {
+    return S.length;
+}
+
+int Index(SString S, SString T) {   //定位操作
+    int i = 1, n = StrLength(S), m = StrLength(T);
+    SString Sub;    //用于暂存子串
+    while(i <= n - m + 1) {
+        SubString(Sub, S, i, m);
+        if(StrCompare(Sub, T) != 0) i++;
+        else return i;  //返回子串在主串中的位置
+    }
+    return 0;
+}
+
+//朴素模式匹配算法
+//设主串长度为 n, 模式串长度为 m, 则最坏时间复杂度为 O(mn), 最好时间复杂度为 O(n)
+int index(SString S, SString T) {
+    int i = 1, j = 1;
+    while(i <= S.length && j <= T.length) {
+        if(S.ch[i] == T.ch[j])
+            i++, j++;   //继续比较后继字符
+        else {
+            i = i - j + 2;
+            j = 1;  //指针后退重新开始匹配
+        }
+    }
+    if(j > T.length)
+        return j - T.length;
+    else return 0;
+}
+
+// KMP算法
+// 设主串长度为 n, 模式串长度为 m, 则最坏时间复杂度为 O(m + n)
+void get_next(SString T, int next[]) {
+    int i = 1, j = 0;
+    next[1] = 0;
+    while(i < T.length) {
+        if(j == 0 || T.ch[i] == T.ch[j]) {
+            i++, j++;
+            next[i] = j;
+        }
+        else
+            j = next[i];
+    }
+}
+
+int KMP(SString S, SString T, int next[]) {
+    int i = 1, j = 1;
+    while(i <= S.length && j <= T.length) {
+        if(j == 0 || S.ch[i] == T.ch[j])
+            i++, j++;
+        else
+            j = next[j];
+    }
+    if(j > T.length)
+        return j - T.length;
+    else return 0;
+}
+
+//改进KMP算法
+void get_nextval(SString T, int nextval[]) {
+    int i = 1, j = 0;
+    nextval[1] = 0;
+    while(i < T.length) {
+        if(j == 0 || T.ch[i] == T.ch[j]) {
+            i++, j++;
+            if(T.ch[i] != T.ch[j])
+                nextval[i] = j;
+            else
+                nextval[i] = nextval[j];
+        }
+        else
+            j = nextval[j];
+    }
+}
+
+int KMP(SString S, SString T, int nextval[]) {
+    int i = 1, j = 1;
+    while(i <= S.length && j <= T.length) {
+        if(j == 0 || S.ch[i] == T.ch[i]) {
+            i++, j++;
+        }
+        else
+            j = nextval[j];
+    }
+    if(j > T.length)
+        return i - T.length;
+    else
+        return 0;
+}
